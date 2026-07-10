@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windsor Farms Coalition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --navy:#1B2A41; --swan:#14171C; --cream:#F6F1E7; --gold:#B08D57; --sage:#6B7A6F; --line:#DCD3C0;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--cream); color:var(--swan); font-family:'EB Garamond', Georgia, serif; font-size:18px; line-height:1.55;}
+  h1,h2,h3,h4{font-family:'Playfair Display', Georgia, serif; margin:0 0 .3em; font-weight:600;}
+  a{color:var(--navy);}
+  .eyebrow{text-transform:uppercase; letter-spacing:.14em; font-size:.7rem; color:var(--gold); font-weight:500;}
+
+  header{background:var(--navy); color:var(--cream); padding:0;}
+  .header-inner{max-width:1000px; margin:0 auto; padding:20px 24px; display:flex; align-items:center; justify-content:center; gap:20px;}
+  .logo-badge{background:var(--cream); padding:8px 14px; flex-shrink:0;}
+  .logo-badge img{height:32px; width:auto; display:block;}
+  header h1{color:var(--cream); font-size:1.6rem; margin:0; text-align:center; white-space:nowrap;}
+  nav{background:#12233B; border-top:1px solid rgba(246,241,231,.15);}
+  nav .nav-inner{max-width:1000px; margin:0 auto; padding:0 24px; display:flex; flex-wrap:wrap; gap:0;}
+  nav a{color:var(--cream); text-decoration:none; padding:12px 14px; font-size:.92rem; letter-spacing:.02em; opacity:.85;}
+  nav a:hover{opacity:1; color:var(--gold);}
+
+  main{max-width:1000px; margin:0 auto; padding:0 24px;}
+  section{padding:48px 0; border-bottom:1px solid var(--line);}
+  section:last-child{border-bottom:none;}
+  section > .eyebrow{display:block; margin-bottom:8px;}
+  section > h2{font-size:2rem; margin-bottom:.2em;}
+  section > p.lede{color:var(--sage); font-style:italic; max-width:640px; margin-bottom:28px;}
+
+  .cat{margin-top:32px;}
+  .cat h3{font-size:1.15rem; color:var(--navy); border-bottom:2px solid var(--gold); display:inline-block; padding-bottom:4px; margin-bottom:14px;}
+  .biz-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:640px){.biz-grid{grid-template-columns:1fr;}}
+  .biz{background:#fff; border:1px solid var(--line); padding:14px 16px;}
+  .biz h4{font-size:1.05rem; margin-bottom:2px;}
+  .biz .contact{color:var(--gold); font-size:.88rem;}
+  .biz p{margin:.3em 0 0; font-size:.92rem; color:#3a3f47;}
+
+  .issue{margin-bottom:44px;}
+  .issue-head{border-left:3px solid var(--gold); padding-left:16px; margin-bottom:18px;}
+  .issue-head .eyebrow{margin-bottom:2px;}
+  .issue h3{font-size:1.4rem;}
+  .issue-body h4{font-size:1.1rem; color:var(--navy); margin-top:20px;}
+  .issue-body p{margin:.5em 0;}
+  .issue-body blockquote{border-left:2px solid var(--line); margin:12px 0; padding-left:14px; color:var(--sage); font-style:italic;}
+
+  .cocktail-card{background:#fff; border:1px solid var(--line); padding:24px; margin-bottom:20px;}
+  .cocktail-card .eyebrow{margin-bottom:4px;}
+  .cocktail-card h3{font-size:1.3rem;}
+  .cocktail-card .ingredients{margin:14px 0; padding:0; list-style:none;}
+  .cocktail-card .ingredients li{padding:3px 0; border-bottom:1px dotted var(--line); font-size:.95rem;}
+  .cocktail-card .steps{color:#3a3f47;}
+  .cocktail-card .note{color:var(--sage); font-style:italic; margin-top:12px;}
+
+  .rva-cat{margin-top:24px;}
+  .rva-cat h4{font-size:1.05rem; color:var(--navy); display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--line); padding-bottom:6px;}
+  .rva-cat .count{font-size:.78rem; color:var(--sage); font-style:italic;}
+  .rva-item{display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px dotted var(--line); font-size:.93rem;}
+  .rva-item .desc{color:var(--sage);}
+  .rva-item .date{white-space:nowrap; color:var(--gold); font-size:.85rem;}
+
+  .event-cat{margin-top:24px;}
+  .event-cat h4{font-size:1.05rem; color:var(--navy);}
+  .event{background:#fff; border:1px solid var(--line); padding:14px 16px; margin-bottom:10px;}
+  .event .when{color:var(--gold); font-size:.85rem;}
+
+  .portal-cta{background:var(--navy); color:var(--cream); padding:40px; text-align:center; margin:40px 0;}
+  .portal-cta h2{color:var(--cream);}
+  .portal-cta a{display:inline-block; margin-top:14px; background:var(--gold); color:#fff; padding:12px 26px; text-decoration:none; font-size:1rem;}
+
+  footer{text-align:center; padding:30px 0; color:var(--sage); font-size:.9rem;}
+
+  /* ---- Login screen ---- */
+  .hidden{display:none !important;}
+  #loginScreen{min-height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column; text-align:center; padding:24px;}
+  #loginScreen .logo-badge{background:var(--navy); padding:14px 22px; margin-bottom:18px; display:inline-block;}
+  #loginScreen .logo-badge img{height:44px; width:auto; display:block;}
+  #loginScreen h1{font-size:2rem; margin-bottom:4px;}
+  #loginScreen p.sub{color:var(--sage); margin-bottom:28px; font-style:italic;}
+  .card{background:#fff; border:1px solid var(--line); padding:28px; max-width:380px; width:100%; text-align:left;}
+  label{display:block; font-size:.8rem; letter-spacing:.05em; text-transform:uppercase; color:var(--sage); margin:14px 0 4px;}
+  input, textarea{width:100%; padding:10px 12px; border:1px solid var(--line); background:var(--cream); font-family:'EB Garamond', serif; font-size:1rem; color:var(--swan); border-radius:2px;}
+  input:focus, textarea:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  button.primary{margin-top:20px; width:100%; background:var(--navy); color:var(--cream); border:none; padding:12px; font-family:'EB Garamond', serif; font-size:1rem; letter-spacing:.03em; cursor:pointer;}
+  button.primary:hover{background:var(--swan);}
+  #loginMsg{margin-top:14px; font-size:.9rem; color:var(--danger); min-height:1.2em;}
+  #signOutBtn{background:none; border:1px solid rgba(246,241,231,.4); color:var(--cream); padding:7px 14px; border-radius:2px; font-family:'EB Garamond',serif; font-size:.9rem; cursor:pointer;}
+  #signOutBtn:hover{border-color:var(--gold); color:var(--gold);}
+
+  /* ---- Marketplace / Directory ---- */
+  .section-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:18px; flex-wrap:wrap; gap:10px;}
+  .toggle-form-btn{background:var(--gold); color:#fff; border:none; padding:9px 16px; font-family:'EB Garamond', serif; font-size:.95rem; cursor:pointer;}
+  #newListingForm, #editDirectoryForm{border:1px solid var(--line); background:#fff; padding:20px; margin-bottom:24px;}
+  #newListingForm .row, #editDirectoryForm .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  @media (max-width:640px){#newListingForm .row, #editDirectoryForm .row{grid-template-columns:1fr;}}
+  .empty-state{color:var(--sage); font-style:italic; padding:30px 0; text-align:center;}
+  .status-msg{font-size:.85rem; margin-top:10px;}
+  .directory-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:640px){.directory-grid{grid-template-columns:1fr;}}
+  .member-card{border:1px solid var(--line); background:#fff; padding:16px 18px;}
+  .member-card h3{font-size:1.1rem;}
+  .member-card .meta{color:var(--sage); font-size:.92rem;}
+  .listing{border:1px solid var(--line); background:#fff; padding:18px; margin-bottom:14px; display:flex; gap:16px;}
+  .listing img{width:110px; height:110px; object-fit:cover; border:1px solid var(--line); flex-shrink:0;}
+  .listing .body{flex:1;}
+  .listing h3{font-size:1.15rem; display:flex; justify-content:space-between; gap:10px;}
+  .listing .price{color:var(--gold); font-weight:600; white-space:nowrap;}
+  .listing .meta{color:var(--sage); font-size:.9rem; margin-top:2px;}
+  .listing .actions{margin-top:8px;}
+  .listing .actions button{background:none; border:1px solid var(--line); padding:4px 10px; font-size:.85rem; cursor:pointer; font-family:'EB Garamond',serif;}
+  .sold-badge{background:var(--sage); color:#fff; font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:2px;}
+  .claimed-badge{background:var(--gold); color:#fff; font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:2px;}
+  .comments{margin-top:12px; border-top:1px dotted var(--line); padding-top:10px;}
+  .comments .comment{font-size:.9rem; padding:5px 0; border-bottom:1px dotted var(--line);}
+  .comments .comment .author{color:var(--navy); font-weight:600;}
+  .comments .comment .time{color:var(--sage); font-size:.78rem; margin-left:6px;}
+  .comments form{display:flex; gap:8px; margin-top:8px;}
+  .comments form input{flex:1; padding:7px 10px; font-size:.9rem;}
+  .comments form button{background:var(--navy); color:#fff; border:none; padding:0 14px; font-family:'EB Garamond',serif; font-size:.9rem; cursor:pointer;}
+  .toggle-comments{background:none; border:none; color:var(--navy); text-decoration:underline; cursor:pointer; font-family:'EB Garamond',serif; font-size:.88rem; padding:0; margin-top:6px;}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginScreen">
+  <div class="logo-badge"><img src="wf-logo-black.png" alt=""></div>
+  <div class="eyebrow">Windsor Farms Coalition</div>
+  <h1>Members Only</h1>
+  <p class="sub">This site is private to Windsor Farms residents</p>
+  <div class="card">
+    <label for="loginEmail">Email</label>
+    <input id="loginEmail" type="email" autocomplete="username" placeholder="you@example.com">
+    <label for="loginPassword">Password</label>
+    <input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••">
+    <button class="primary" id="loginBtn">Sign in</button>
+    <div id="loginMsg"></div>
+  </div>
+  <p class="sub" style="margin-top:20px; font-size:.85rem;">Don't have an account? Contact the Coalition: <a href="mailto:wfcoalition@gmail.com">wfcoalition@gmail.com</a></p>
+</div>
+
+<div id="siteContent" class="hidden">
+
+<header>
+  <div class="header-inner">
+    <div class="logo-badge"><img src="wf-logo-black.png" alt=""></div>
+    <h1>Windsor Farms Coalition</h1>
+    <div class="logo-badge"><img src="wf-logo-black.png" alt=""></div>
+  </div>
+</header>
+<div style="background:var(--navy); text-align:right; padding:0 24px 12px;">
+  <button id="signOutBtn">Sign out</button>
+</div>
+<nav>
+  <div class="nav-inner">
+    <a href="#services">Services</a>
+    <a href="#kids">Kids' Businesses</a>
+    <a href="#rva311">RVA 311</a>
+    <a href="#events">Events &amp; Planning</a>
+    <a href="#blackswan">The Black Swan</a>
+    <a href="#marketplace">Marketplace</a>
+    <a href="#directory">Directory</a>
+    <a href="#bar">Black Swan Bar</a>
+  </div>
+</nav>
+
+<main>
+
+  <section>
+    <div class="eyebrow">Welcome</div>
+    <h2>A community resource for our neighborhood</h2>
+    <p class="lede">Trusted services, local businesses, city coordination, and upcoming events — curated by neighbors, for neighbors.</p>
+  </section>
+
+  <section id="services">
+    <div class="eyebrow">Recommended locally</div>
+    <h2>Service Recommendations</h2>
+
+    <div class="cat"><h3>🔧 Appliance Repair</h3><div class="biz-grid">
+      <div class="biz"><h4>RVA Repairs</h4><div class="contact">Faith — 804-591-7350 · service@rvarepairs.com</div><p>SubZero specialists. Owner is factory trained and certified. Highly recommended by multiple neighbors.</p></div>
+      <div class="biz"><h4>Residential Appliance</h4><div class="contact">804-276-4675</div><p>Used by neighbors for years.</p></div>
+      <div class="biz"><h4>Oliver's Appliance Service</h4><div class="contact">James Oliver — 804-216-2289</div><p>Highly recommended by multiple neighbors for dishwasher and appliance repair.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🚗 Auto Body</h3><div class="biz-grid">
+      <div class="biz"><h4>Pouncey Tract Collision Center</h4><p>Highly recommended for both minor and significant collision repair.</p></div>
+      <div class="biz"><h4>Koontz Body Shop</h4><div class="contact">Sheppard Street</div><p>Good results on multiple occasions.</p></div>
+      <div class="biz"><h4>S &amp; S Body Shop</h4><div class="contact">Near Willow Lawn</div><p>Recommended by neighbors.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🚙 Auto Detailing &amp; Car Wash</h3><div class="biz-grid">
+      <div class="biz"><h4>Windsor Farms Mobile Car Wash</h4><div class="contact">Reid Owen — 404-904-9940</div><p>Third-year neighborhood business. Exterior foam wash, hand dry, full interior vacuum, wheels and tires. Sedans from $35, SUVs from $45. Comes to your home on your schedule.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🪚 Carpentry</h3><div class="biz-grid">
+      <div class="biz"><h4>Plumb Builders</h4><div class="contact">Andrew Headley — 804-306-3379</div><p>Recommended for exterior carpentry.</p></div>
+      <div class="biz"><h4>Right Angle Woodcraft</h4><div class="contact">Bernardo — 205-552-8975</div><p>Recommended for exterior carpentry.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>✨ Cleaning Service</h3><div class="biz-grid">
+      <div class="biz"><h4>Joyce Dreyer</h4><div class="contact">(804) 405-9116</div><p>Used by multiple neighbors for years. Very nice, honest, and trustworthy.</p></div>
+      <div class="biz"><h4>D&amp;P Cleaning</h4><div class="contact">Phyllis &amp; Doug — 804-931-6420</div><p>Husband and wife team. Very nice.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🏗️ Crawlspace &amp; Foundation</h3><div class="biz-grid">
+      <div class="biz"><h4>JES</h4><p>Crawlspace encapsulation and structural support footings. Thorough and professional with excellent warranty follow-up.</p></div>
+      <div class="biz"><h4>Stable Foundations</h4><p>Excellent for crawlspace repair and foundation work.</p></div>
+      <div class="biz"><h4>Creative Conservation</h4><p>Recommended for crawlspace and foundation services.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>👨‍⚕️ Doctors &amp; Medical</h3><div class="biz-grid">
+      <div class="biz"><h4>Commonwealth Ear Nose &amp; Throat Specialists</h4><div class="contact">Dr. Brian Fishero &amp; Dr. Julie Kerr — 804-525-4231</div><p>Recommended by multiple neighbors for ENT and ear care.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>⚡ Electrician</h3><div class="biz-grid">
+      <div class="biz"><h4>Webb Electric Co.</h4><div class="contact">John Webb — 804-282-4619</div><p>Recommended by multiple neighbors for household electrical projects.</p></div>
+      <div class="biz"><h4>Chuck Seward Electricians</h4><div class="contact">804-426-8863</div><p>Family business used by neighbors for over 30 years.</p></div>
+      <div class="biz"><h4>Daniel Carter</h4><p>Numerous electrical projects for neighbors. Highly recommended.</p></div>
+      <div class="biz"><h4>Liberty Electric</h4><div class="contact">Kurt Berling — 804-400-0788</div><p>Has done a lot of work in the neighborhood.</p></div>
+      <div class="biz"><h4>Southern Electrical Services</h4><div class="contact">Jeff — 804-675-8455</div><p>Recommended for wiring and electrical additions.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🪵 Fencing</h3><div class="biz-grid">
+      <div class="biz"><h4>Tool Tyme</h4><div class="contact">William Young — 804-347-6464</div></div>
+      <div class="biz"><h4>Chesterfield Fence</h4><p>Incredible and hardworking. Came in at half the cost of competitors.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>⚙️ Generator Service</h3><div class="biz-grid">
+      <div class="biz"><h4>Cox Electrical</h4><div class="contact">Billy Cox — 804-678-8777</div><p>Highly recommended for generator repairs and yearly maintenance.</p></div>
+      <div class="biz"><h4>Hale's Generator Service</h4><div class="contact">Ashland</div><p>Very reasonable and good service.</p></div>
+      <div class="biz"><h4>Woodfin</h4><p>Recommended for generator service and maintenance.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🔨 General Contractor</h3><div class="biz-grid">
+      <div class="biz"><h4>Rick Sutton</h4><div class="contact">804-994-7127</div><p>Recommended for small home projects.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🪣 Grout &amp; Tile</h3><div class="biz-grid">
+      <div class="biz"><h4>Grout Doctor</h4><div class="contact">David — 804-864-0661</div><p>Recommended for showers, tubs, and tile grout repair.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🌧️ Gutters</h3><div class="biz-grid">
+      <div class="biz"><h4>Capitol City Roofing</h4><div class="contact">Charles Johnson — 804-745-7125</div><p>Recommended for copper gutters and general gutter work.</p></div>
+      <div class="biz"><h4>RW Harper</h4><p>Recommended for gutters and roofing.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🗝️ Hardware &amp; Home Specialty</h3><div class="biz-grid">
+      <div class="biz"><h4>Anthony's Decorative Hardware</h4><div class="contact">2211 Tomlynn Street</div><p>Amazing for antique and decorative hardware, old door locks, and knobs.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🌡️ Heating &amp; Plumbing</h3><div class="biz-grid">
+      <div class="biz"><h4>Harris Heating &amp; Plumbing Co.</h4><div class="contact">Clay Harris — (804) 357-2549 cell · (804) 798-1201 office</div></div>
+      <div class="biz"><h4>Sam Burton Plumbing</h4><p>Family plumbing business used by neighbors for over 30 years.</p></div>
+      <div class="biz"><h4>Kelleher Plumbing</h4><p>Used by neighbors with complete confidence for over 25 years.</p></div>
+      <div class="biz"><h4>Nuckols Plumbing, Heating &amp; Cooling</h4><p>Recommended for plumbing repairs.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>💍 Jewelry Repair</h3><div class="biz-grid">
+      <div class="biz"><h4>Lustre</h4><div class="contact">Robin Adolf — Parham Rd near Regency</div><p>Antique and heirloom jewelry cleaning, repair, and resizing.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>💧 Irrigation</h3><div class="biz-grid">
+      <div class="biz"><h4>Forever Green Irrigation</h4><div class="contact">James Atkinson — 804-363-1523</div><p>Highly recommended. Reasonable prices, knowledgeable.</p></div>
+      <div class="biz"><h4>Carter Irrigation</h4><p>Used by neighbors for 30+ years.</p></div>
+      <div class="biz"><h4>Miller Irrigation</h4><p>Solenoid replacement and system service. Good reputation.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🌿 Lawn Care &amp; Landscaping</h3><div class="biz-grid">
+      <div class="biz"><h4>Bey Landscaping</h4><div class="contact">Clarence Bey — (804) 350-2442</div><p>Owner-operated. Used by multiple neighbors for 15+ years.</p></div>
+      <div class="biz"><h4>Butler Landscaping</h4><div class="contact">Lon Butler</div><p>Used by neighbors for decades.</p></div>
+      <div class="biz"><h4>Ethics Grounds</h4><div class="contact">Kevin — 804-432-5779</div><p>Recommended for grounds maintenance.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🧱 Masonry &amp; Brick</h3><div class="biz-grid">
+      <div class="biz"><h4>Ed Wingfield</h4><div class="contact">(804) 839-5520</div><p>Sidewalk, porch, and step repair. Very knowledgeable.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🖌️ Painting</h3><div class="biz-grid">
+      <div class="biz"><h4>Proper Painters, LLC</h4><p>Absolute favorites in the neighborhood. Highly recommended for interior and exterior.</p></div>
+      <div class="biz"><h4>Raynor Painting</h4><p>Answers calls, produces excellent work, and stands behind it.</p></div>
+      <div class="biz"><h4>Virginia General Contracting &amp; Painting</h4><div class="contact">Oscar Castillo — 804-928-6120</div></div>
+      <div class="biz"><h4>Solomon Wilkins</h4><div class="contact">804-833-7470</div><p>Used by neighbors multiple times with very pleasing results.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🐾 Pet Sitting &amp; Dog Walking</h3><div class="biz-grid">
+      <div class="biz"><h4>Wrenn Schoeffler</h4><p>Very communicative and excellent with dogs and house-watching.</p></div>
+      <div class="biz"><h4>Caren Brown — Collar Club of Virginia</h4><div class="contact">(540) 878-7322</div><p>Lives in the neighborhood.</p></div>
+      <div class="biz"><h4>Cheryl Browning</h4><div class="contact">(804) 904-2510</div></div>
+      <div class="biz"><h4>Bridget White</h4><div class="contact">(804) 912-5308</div></div>
+      <div class="biz"><h4>Suzanne Phipps</h4><div class="contact">804-767-0091</div></div>
+      <div class="biz"><h4>Emma Smith</h4><div class="contact">804-337-9749</div></div>
+    </div></div>
+
+    <div class="cat"><h3>🏊 Pool Care</h3><div class="biz-grid">
+      <div class="biz"><h4>Pool Butler</h4><div class="contact">poolbutler01@gmail.com</div><p>Very responsive. Recommended for pool maintenance.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🚿 Power Washing</h3><div class="biz-grid">
+      <div class="biz"><h4>Spraysoft Wash</h4><div class="contact">Mark Fermoyle — 804-363-3686</div><p>Excellent work on brick, roof, and house washing.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🏠 Roofing</h3><div class="biz-grid">
+      <div class="biz"><h4>Capitol City Roofing</h4><div class="contact">Charles Johnson — 804-745-7125</div><p>The most widely recommended roofer in the neighborhood. Specializes in slate.</p></div>
+      <div class="biz"><h4>AC Dudley Roofing</h4><div class="contact">Alan Coates — 804-590-9559</div><p>Highly recommended for slate roof work.</p></div>
+      <div class="biz"><h4>Hammersmith Roofing</h4><div class="contact">Justin Dooley</div></div>
+      <div class="biz"><h4>Hertless Roofing</h4><p>Recommended for tile and general roofing repairs.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🔒 Security Systems</h3><div class="biz-grid">
+      <div class="biz"><h4>MMIS</h4><p>Recommended for home security monitoring and maintenance.</p></div>
+      <div class="biz"><h4>ADT</h4><p>Mention Windsor Farms when calling for personalized service.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🏠 Siding</h3><div class="biz-grid">
+      <div class="biz"><h4>Felix Mondragon</h4><div class="contact">(804) 873-5484</div><p>Excellent. Recommended for siding replacement.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🌳 Tree Service</h3><div class="biz-grid">
+      <div class="biz"><h4>True Timber</h4><p>Very professional and reasonably priced. Highly recommended for tree removal and trimming.</p></div>
+      <div class="biz"><h4>Root Down Tree Management</h4><div class="contact">Matt Lee — 804-385-8974</div></div>
+      <div class="biz"><h4>Bloom Stump Removal</h4><div class="contact">804-709-6495</div><p>Husband and wife team; smaller machine for tight spaces.</p></div>
+      <div class="biz"><h4>Commonwealth Tree Care</h4><p>Recommended for tree and stump removal.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🚖 Transportation</h3><div class="biz-grid">
+      <div class="biz"><h4>Michael Manley</h4><div class="contact">804-774-8208</div><p>Airport pickup and personal driving.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🐿️ Wildlife &amp; Pest Removal</h3><div class="biz-grid">
+      <div class="biz"><h4>Critter Control</h4><p>Wonderful service for general wildlife and pest removal including bats.</p></div>
+      <div class="biz"><h4>Nice Wildlife</h4><p>Used for bat removal and remediation.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🪟 Window Treatments</h3><div class="biz-grid">
+      <div class="biz"><h4>Styles by Sharon</h4><div class="contact">Sharon Gizzi — (804) 360-1678</div><p>Excellent for custom Roman shades.</p></div>
+    </div></div>
+
+    <div class="cat"><h3>🫧 Window Washing</h3><div class="biz-grid">
+      <div class="biz"><h4>West End Window Washing</h4><div class="contact">Mark Walach</div><p>10+ years. Custom squeegees for every window size.</p></div>
+      <div class="biz"><h4>Spotless</h4><p>Reliable, comes when scheduled, always brings the right crew.</p></div>
+    </div></div>
+  </section>
+
+  <section id="kids">
+    <div class="eyebrow">⭐ Neighborhood entrepreneurs</div>
+    <h2>Kids' Businesses</h2>
+    <div class="biz-grid" style="margin-top:20px;">
+      <div class="biz"><h4>🚗 Reid Owen's Windsor Farms Mobile Car Wash</h4><p>Now in its 3rd year! Spring through fall, plus winter drive-through washes after snow and salt events. 10th grader at St. Christopher's.</p></div>
+      <div class="biz"><h4>👶 Kate Holladay — Babysitting &amp; Mother's Helper</h4><p>Rising 6th grader at St. Catherine's.</p></div>
+      <div class="biz"><h4>👶 Alice Westbrook</h4><div class="contact">Contact Martha — 804-370-9516</div><p>13 years old. Lots of availability this summer for babysitting and pet sitting.</p></div>
+      <div class="biz"><h4>👶 Rudd Family Babysitter</h4><div class="contact">Contact Taylor — ttrudd@gmail.com</div><p>Rising freshman at STC. CPR/first-aid certified.</p></div>
+      <div class="biz"><h4>🐕 Juliet Morris</h4><p>St. Catherine's student. Babysitting, dog walking, pet sitting, mail/package collection.</p></div>
+      <div class="biz"><h4>🗑️ Fresh &amp; Clean Cans</h4><div class="contact">Lawson &amp; Jackson Knier — 804-363-6921 · 213 Nottingham</div><p>Trash can cleaning and sanitizing throughout the neighborhood.</p></div>
+    </div>
+    <p style="margin-top:18px; color:var(--sage); font-style:italic;">Know another neighborhood kid running a business? Reach out to have them listed here.</p>
+  </section>
+
+  <section id="rva311">
+    <div class="eyebrow">🚧 As of June 28, 2026</div>
+    <h2>City Service Requests</h2>
+    <p class="lede">Active and recently resolved <a href="https://www.rva311.com" target="_blank">RVA 311</a> requests in Windsor Farms. <a href="https://www.rva311.com/rvaone#/request/list" target="_blank">Upvote open requests →</a> (Filter → Neighborhoods → Windsor Farms) to increase City prioritization.</p>
+
+    <div class="rva-cat"><h4>💧 Stormwater &amp; Drainage <span class="count">8 open · 1 resolved</span></h4>
+      <div class="rva-item"><div><strong>3907 Sulgrave Rd</strong> — Clean Stormwater Drain <span class="desc">Street floods with standing water after rain</span></div><span class="date">Jun 23</span></div>
+      <div class="rva-item"><div><strong>3908 Sulgrave Rd</strong> — Clean Stormwater Drain (2 reports) <span class="desc">Severely clogged basins on both sides</span></div><span class="date">Jun 15, May 28</span></div>
+      <div class="rva-item"><div><strong>300 Banbury Rd</strong> — Clean Stormwater Drain <span class="desc">Backed up after rain events</span></div><span class="date">Jun 10</span></div>
+      <div class="rva-item"><div><strong>4209 Sulgrave Rd</strong> — Assess Standing Water <span class="desc">Leaking city water meter</span></div><span class="date">May 24</span></div>
+      <div class="rva-item"><div><strong>102 Windsor Way</strong> — Repair Curbs &amp; Gutters <span class="desc">Chronic 10-year drainage problem</span></div><span class="date">Apr 17</span></div>
+    </div>
+
+    <div class="rva-cat"><h4>🌳 Dead &amp; Dying Trees <span class="count">12 open · 3 resolved</span></h4>
+      <div class="rva-item"><div><strong>4201 E Oxford Cir</strong> — Assess Tree <span class="desc">Severely rotten; poses danger to public</span></div><span class="date">Apr 18</span></div>
+      <div class="rva-item"><div><strong>4301 Oxford Rd</strong> — Assess Tree <span class="desc">100% dead</span></div><span class="date">Apr 18</span></div>
+      <div class="rva-item"><div><strong>4607 Sulgrave Rd</strong> — Assess Tree <span class="desc">Tree gone; only trunk remaining</span></div><span class="date">Apr 14</span></div>
+      <div class="rva-item"><div><strong>103 Gun Club Rd</strong> — Assess Tree <span class="desc">Large dead branches posing hazard</span></div><span class="date">May 29</span></div>
+      <div class="rva-item"><div><strong>7 Banbury Rd</strong> — Assess Tree <span class="desc">Large limb hanging over road</span></div><span class="date">Jun 15</span></div>
+    </div>
+
+    <div class="rva-cat"><h4>🚶 Sidewalks &amp; Curbs <span class="count">6 open · 1 resolved</span></h4>
+      <div class="rva-item"><div><strong>4105 Sulgrave Rd</strong> — Repair Sidewalk <span class="desc">Uplifted bricks, severe trip hazard</span></div><span class="date">Jun 28</span></div>
+      <div class="rva-item"><div><strong>4501 Sulgrave Rd</strong> — Repair Sidewalk <span class="desc">Missing and protruding bricks</span></div><span class="date">May 10</span></div>
+      <div class="rva-item"><div><strong>215 Berkshire Rd</strong> — Repair Sidewalk <span class="desc">14-year resident requesting repair</span></div><span class="date">Apr 25</span></div>
+    </div>
+
+    <div class="rva-cat"><h4>🚗 Potholes &amp; Roads <span class="count">2 open · 2 resolved</span></h4>
+      <div class="rva-item"><div><strong>Powhite Pkwy S</strong> — Pothole on Road <span class="desc">Caused 2 flat tires ($972 damage)</span></div><span class="date">Jun 1</span></div>
+      <div class="rva-item"><div><strong>200 Gun Club Rd</strong> — Pothole on Road <span class="desc">Slowly growing</span></div><span class="date">Jun 16</span></div>
+    </div>
+
+    <div class="rva-cat"><h4>🌱 Tree Planting Requests <span class="count">2 open · 1 resolved</span></h4>
+      <div class="rva-item"><div><strong>3900 Dover Rd</strong> — Request New Tree Planting</div><span class="date">Jun 11</span></div>
+      <div class="rva-item"><div><strong>7 Banbury Rd</strong> — Request New Tree Planting</div><span class="date">May 25</span></div>
+    </div>
+
+    <div class="cocktail-card" style="margin-top:32px; background:transparent; border:none; padding:0;">
+      <h4 style="font-family:'Playfair Display', serif; color:var(--navy);">How to Use RVA 311</h4>
+      <ol>
+        <li>Download the RVA311 app or go to <a href="https://www.rva311.com" target="_blank">rva311.com</a></li>
+        <li>Create an account / log in</li>
+        <li>Select "Create New Request"</li>
+        <li>Choose the appropriate category</li>
+        <li>Add location details and upload photos</li>
+        <li>Submit — you'll receive email updates on status</li>
+        <li><strong>Search the map for existing requests and upvote them</strong> to increase prioritization</li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="events">
+    <div class="eyebrow">🗓️</div>
+    <h2>Events &amp; Planning</h2>
+
+    <div class="event-cat"><h4>🍋 Neighborhood Kids' Events</h4>
+      <div class="event"><h4>Henry &amp; Wesley's LemonAID Stand</h4><div class="when">July 18–19 · 12–3pm · 207 Queen Charlotte Road</div><p>Lemonade stand fundraiser. <a href="https://give.chfrichmond.org/fundraiser/7360608" target="_blank">Donate here →</a></p></div>
+    </div>
+
+    <div class="event-cat"><h4>🏰 Agecroft Hall &amp; Gardens</h4>
+      <div class="event"><h4>Garden Show &amp; Plant Sale</h4><div class="when">April 18, 2026 — Past</div></div>
+    </div>
+
+    <div class="event-cat"><h4>🎸 Allianz Amphitheater at Riverfront — 2026 Season</h4>
+      <div class="event"><div class="when">Jul 23</div>Bob Dylan — Rock</div>
+      <div class="event"><div class="when">Aug 19</div>Chris Stapleton's All-American Road Show — Country</div>
+      <div class="event"><div class="when">Sep 3</div>Jerry Garcia Symphonic Celebration with the Richmond Symphony — Classical</div>
+      <p><a href="https://www.livenation.com/venue/KovZ917ARgg/allianz-amphitheater-at-riverfront-events" target="_blank">Full schedule &amp; tickets →</a></p>
+    </div>
+
+    <div class="event-cat"><h4>🌳 Dogwood Dell — Festival of the Arts 2026</h4>
+      <div class="event"><div class="when">Jul 4</div>The Big Show: Independence Day Celebration &amp; Fireworks with Richmond Concert Band, 5PM</div>
+      <p style="color:var(--sage); font-size:.9rem;">Free admission · Amphitheater next to the WWI Carillon Memorial · Free parking on site</p>
+    </div>
+  </section>
+
+  <section id="blackswan">
+    <div class="eyebrow">🦢 A publication of the Windsor Farms Coalition</div>
+    <h2>The Black Swan</h2>
+    <p class="lede">Reviving the historic neighborhood magazine first published in 1927, named in tribute to William Byrd II, founder of Richmond. Contact: <a href="mailto:wfcoalition@gmail.com">wfcoalition@gmail.com</a></p>
+
+    <div class="issue">
+      <div class="issue-head">
+        <div class="eyebrow">Issue No. 3 — May 2026</div>
+        <h3>Coalition Update · Infrastructure · Security</h3>
+      </div>
+      <div class="issue-body">
+        <p>Participation in the Windsor Farms Coalition keeps growing. We're evolving from a neighborhood effort into a broader platform for constructive engagement, both with the city and neighboring communities.</p>
+        <h4>Meeting with Councilman Breton</h4>
+        <p>A productive discussion on April 9th with Councilman Andrew "Gumby" Breton, attended by Drew Owen and Jay Howren.</p>
+        <blockquote>"To the extent that private covenants already exist, City zoning changes cannot override them."</blockquote>
+        <h4>Streetlights — "Let There Be Light!"</h4>
+        <p>The orange traffic cone at Wakefield and Sulgrave has been replaced with a new, working light post. Two more posts are scheduled.</p>
+        <h4>Curbs, Sidewalks &amp; Standing Water</h4>
+        <p>A map of known problem areas — currently exceeding 200 locations — was provided to the City. If you spot additional problem areas, send pictures and addresses to the Coalition.</p>
+        <h4>Coalition Expansion &amp; Partnerships</h4>
+        <p>A new partnership with Westmoreland Place, Hampton Gardens, and Hillcrest gives the Coalition a larger, more unified voice.</p>
+        <h4>Security Update</h4>
+        <p>Off-duty patrols continue under Sgt. Chris Jernigan. On April 15, a vehicle break-in was reported. Contractors, landscapers, and service providers should be reminded to lock their vehicles.</p>
+      </div>
+    </div>
+
+    <div class="issue">
+      <div class="issue-head">
+        <div class="eyebrow">Issue No. 2 — March 2026</div>
+        <h3>Public Safety · Infrastructure · 311 Guide</h3>
+      </div>
+      <div class="issue-body">
+        <p>More than 200 households now engaged. A secure, password-protected neighborhood directory and interactive map is also in development.</p>
+        <h4>Public Safety &amp; Security</h4>
+        <p>Sgt. Chris Jernigan has returned as off-duty patrol coordinator, previously serving 2010–2022.</p>
+        <h4>Coalition Successes</h4>
+        <p>Longstanding sinkhole on Wakefield Road fully repaired. Streetlight at Sulgrave and Marston restored after more than two years of darkness. 6+ clogged storm drains cleared.</p>
+      </div>
+    </div>
+
+    <div class="issue">
+      <div class="issue-head">
+        <div class="eyebrow">Issue No. 1 — March 2026</div>
+        <h3>Inaugural Issue · Coalition Launch</h3>
+      </div>
+      <div class="issue-body">
+        <p>This publication revives the historic Windsor Farms magazine <em>The Black Swan</em>, first published in 1927. The Coalition is a voluntary, resident-driven organization — it does not govern, enforce covenants, or replace the HOA.</p>
+        <p>More than 150+ households expressed interest. The Coalition is registered as a Virginia non-stock corporation with 501(c)(3) application pending.</p>
+        <p><a href="https://drive.google.com/file/d/18ecjCrj393BfZ5enXwXDCFDsDmft6vmJ/view?usp=sharing" target="_blank">View the original 1927 issue →</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="marketplace">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">For neighbors, by neighbors</div>
+        <h2>Marketplace</h2>
+      </div>
+      <button class="toggle-form-btn" id="showListingFormBtn">+ Post an item</button>
+    </div>
+
+    <form id="newListingForm" class="hidden">
+      <div class="row">
+        <div><label>Title</label><input id="lTitle" required></div>
+        <div><label>Price</label><input id="lPrice" placeholder="$25, Free, OBO…"></div>
+      </div>
+      <label>Description</label>
+      <textarea id="lDesc" rows="3"></textarea>
+      <div class="row">
+        <div><label>Category</label><input id="lCategory" placeholder="Furniture, kids' gear, tools…"></div>
+        <div><label>Photo URL (optional)</label><input id="lPhoto" placeholder="https://…"></div>
+      </div>
+      <label>How should buyers reach you?</label>
+      <input id="lContact" placeholder="Phone, email, or 'reply via portal'">
+      <button type="submit" class="primary">Post listing</button>
+      <div class="status-msg" id="listingMsg"></div>
+    </form>
+
+    <div id="listingsContainer"></div>
+  </section>
+
+  <section id="directory">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">200+ households and counting</div>
+        <h2>Neighbor Directory</h2>
+      </div>
+      <button class="toggle-form-btn" id="showDirFormBtn">Notification preferences</button>
+    </div>
+    <p style="color:var(--sage); font-size:.9rem; margin-top:-10px;">Directory entries are maintained by the Coalition. To add or update your household's listing, contact <a href="mailto:wfcoalition@gmail.com">wfcoalition@gmail.com</a>.</p>
+
+    <form id="editDirectoryForm" class="hidden">
+      <label style="display:flex; align-items:center; gap:8px; text-transform:none; letter-spacing:0; font-size:1rem; color:var(--swan); margin-top:0;">
+        <input type="checkbox" id="dNotify" style="width:auto;"> Email me when new items are posted to the Marketplace
+      </label>
+      <button type="submit" class="primary">Save preference</button>
+      <div class="status-msg" id="dirMsg"></div>
+      <div class="status-msg" id="dirNoEntryMsg" style="color:var(--danger);"></div>
+    </form>
+
+    <div id="directoryContainer"></div>
+  </section>
+
+  <section id="bar">
+    <div class="eyebrow">🥃 A tradition as old as the neighborhood itself</div>
+    <h2>Black Swan Bar</h2>
+    <p class="lede">The signature cocktail of each Black Swan issue.</p>
+
+    <div class="cocktail-card">
+      <div class="eyebrow">Issue No. 3 — May 2026</div>
+      <h3>The Windsor Farms Julep</h3>
+      <p>There are few drinks more closely tied to Virginia than the Mint Julep. Long before it became synonymous with Churchill Downs, the julep was a staple across the Tidewater and Piedmont. This version stays true to that tradition with a subtle Virginia touch: local honey in place of sugar.</p>
+      <ul class="ingredients">
+        <li>2 oz bourbon</li>
+        <li>¼ oz Virginia honey syrup (equal parts honey and warm water)</li>
+        <li>6–8 fresh mint leaves</li>
+      </ul>
+      <p class="steps">Gently press the mint with the honey syrup to release its oils. Add the bourbon, then fill the cup with crushed ice and stir until the exterior frosts. Top with additional ice and garnish with a fresh mint bouquet.</p>
+      <p class="note">The key is restraint. Best enjoyed outdoors, at the end of the day, with no particular urgency to be anywhere else.</p>
+    </div>
+
+    <div class="cocktail-card">
+      <div class="eyebrow">Issue No. 2 — March 2026</div>
+      <h3>The Windsor Farms Rickey</h3>
+      <p>Born in Washington, D.C. in the late nineteenth century, the original Rickey was a drink of clarity — gin, lime, and soda. This variation keeps that spirit intact while allowing for the quiet arrival of spring.</p>
+      <ul class="ingredients">
+        <li>2 oz gin</li>
+        <li>½ fresh lime, squeezed and dropped in</li>
+        <li>2 thin slices cucumber</li>
+        <li>2–3 mint leaves, lightly expressed</li>
+        <li>Ice &amp; soda water to top</li>
+      </ul>
+      <p class="steps">Combine in a tall glass. Add ice, top with soda water, and stir once, briefly. No sugar. No additional garnish.</p>
+      <p class="note">Best taken in the early evening, when the light is still present but beginning to fade.</p>
+    </div>
+
+    <div class="cocktail-card">
+      <div class="eyebrow">Issue No. 1 — March 2026</div>
+      <h3>The Black Swan Boulevardier</h3>
+      <p>Born in the 1920s and favored in both Paris and New York drawing rooms, the Boulevardier offers a balance of warmth and sophistication.</p>
+      <ul class="ingredients">
+        <li>2 oz bourbon</li>
+        <li>1 oz sweet vermouth</li>
+        <li>1 oz Campari</li>
+        <li>Orange peel</li>
+      </ul>
+      <p class="steps">Stir with ice until well chilled. Strain into a chilled coupe or small stemmed glass. Express an orange peel over the top and discard.</p>
+      <p class="note">For a softer finish, add ¼ oz Tuaca before stirring.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>© 2026 Windsor Farms Coalition · Windsor Farms, Richmond, VA</footer>
+
+</div><!-- /#siteContent -->
+
+<script>
+// ====== CONFIGURE THESE TWO VALUES ======
+const SUPABASE_URL = "https://maazeduxjesenoyrffcp.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_W7RX0KWHyvAmGVo0lBGx8Q_t4OxUEUO";
+// =========================================
+
+const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentUser = null;
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const msg = document.getElementById('loginMsg');
+  msg.textContent = "Signing in…";
+  const { data, error } = await supa.auth.signInWithPassword({ email, password });
+  if (error) { msg.textContent = error.message; return; }
+  msg.textContent = "";
+  onSignedIn(data.user);
+});
+
+document.getElementById('signOutBtn').addEventListener('click', async () => {
+  await supa.auth.signOut();
+  location.reload();
+});
+
+async function checkSession() {
+  const { data } = await supa.auth.getSession();
+  if (data.session) onSignedIn(data.session.user);
+}
+
+function onSignedIn(user) {
+  currentUser = user;
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('siteContent').classList.remove('hidden');
+  loadListings();
+  loadDirectory();
+}
+
+// ---------- Marketplace ----------
+document.getElementById('showListingFormBtn').addEventListener('click', () => {
+  document.getElementById('newListingForm').classList.toggle('hidden');
+});
+
+document.getElementById('newListingForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('listingMsg');
+  msg.textContent = "Posting…";
+  const { error } = await supa.from('listings').insert({
+    seller_id: currentUser.id,
+    title: document.getElementById('lTitle').value.trim(),
+    price: document.getElementById('lPrice').value.trim(),
+    description: document.getElementById('lDesc').value.trim(),
+    category: document.getElementById('lCategory').value.trim(),
+    photo_url: document.getElementById('lPhoto').value.trim() || null,
+    contact: document.getElementById('lContact').value.trim(),
+  });
+  if (error) { msg.textContent = error.message; return; }
+  msg.textContent = "Posted!";
+  e.target.reset();
+  e.target.classList.add('hidden');
+  loadListings();
+});
+
+async function loadListings() {
+  const container = document.getElementById('listingsContainer');
+  container.innerHTML = "Loading…";
+  const { data, error } = await supa.from('listings').select('*').order('created_at', { ascending: false });
+  if (error) { container.innerHTML = `<div class="empty-state">${error.message}</div>`; return; }
+  if (!data.length) { container.innerHTML = `<div class="empty-state">No listings yet. Be the first to post something!</div>`; return; }
+  container.innerHTML = data.map(l => `
+    <div class="listing">
+      ${l.photo_url ? `<img src="${escapeHtml(l.photo_url)}" alt="">` : ''}
+      <div class="body">
+        <h3>${escapeHtml(l.title)} <span class="price">${escapeHtml(l.price || '')}</span></h3>
+        <div class="meta">${escapeHtml(l.category || '')}
+          ${l.status === 'sold' ? ' · <span class="sold-badge">Sold</span>' : ''}
+          ${l.status === 'claimed' ? ' · <span class="claimed-badge">Claimed</span>' : ''}
+        </div>
+        <p>${escapeHtml(l.description || '')}</p>
+        <div class="meta">Contact: ${escapeHtml(l.contact || 'See directory')}</div>
+        <div class="actions">
+          ${claimButtonHtml(l)}
+          ${l.seller_id === currentUser.id ? `
+            ${l.status !== 'sold' ? `<button onclick="markSold('${l.id}')">Mark sold</button>` : ''}
+            <button onclick="deleteListing('${l.id}')">Delete</button>
+          ` : ''}
+        </div>
+        <button class="toggle-comments" onclick="toggleComments('${l.id}')">Questions &amp; comments</button>
+        <div class="comments hidden" id="comments-${l.id}">
+          <div id="commentList-${l.id}">Loading…</div>
+          <form onsubmit="postComment(event, '${l.id}')">
+            <input type="text" placeholder="Ask a question or leave a comment…" id="commentInput-${l.id}" required>
+            <button type="submit">Post</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function claimButtonHtml(l) {
+  if (l.status === 'sold') return '';
+  if (l.status === 'claimed') {
+    if (l.claimed_by === currentUser.id) {
+      return `<button onclick="unclaimListing('${l.id}')">Unclaim</button>`;
+    }
+    if (l.seller_id === currentUser.id) {
+      return `<button onclick="unclaimListing('${l.id}')">Release claim</button>`;
+    }
+    return '';
+  }
+  if (l.seller_id === currentUser.id) return '';
+  return `<button onclick="claimListing('${l.id}')">Claim this item</button>`;
+}
+
+async function claimListing(id) {
+  const { error } = await supa.rpc('claim_listing', { target_id: id });
+  if (error) { alert(error.message); return; }
+  loadListings();
+}
+async function unclaimListing(id) {
+  const { error } = await supa.rpc('unclaim_listing', { target_id: id });
+  if (error) { alert(error.message); return; }
+  loadListings();
+}
+
+async function markSold(id) {
+  await supa.from('listings').update({ status: 'sold' }).eq('id', id);
+  loadListings();
+}
+async function deleteListing(id) {
+  if (!confirm('Delete this listing?')) return;
+  await supa.from('listings').delete().eq('id', id);
+  loadListings();
+}
+
+// ---------- Comments ----------
+function toggleComments(listingId) {
+  const box = document.getElementById(`comments-${listingId}`);
+  box.classList.toggle('hidden');
+  if (!box.classList.contains('hidden')) loadComments(listingId);
+}
+
+async function loadComments(listingId) {
+  const list = document.getElementById(`commentList-${listingId}`);
+  list.innerHTML = "Loading…";
+  const { data, error } = await supa.from('comments').select('*').eq('listing_id', listingId).order('created_at', { ascending: true });
+  if (error) { list.innerHTML = `<div class="empty-state">${error.message}</div>`; return; }
+  if (!data.length) { list.innerHTML = `<div style="color:var(--sage); font-size:.88rem;">No questions yet.</div>`; return; }
+  list.innerHTML = data.map(c => `
+    <div class="comment"><span class="author">${escapeHtml(c.author_name || 'Neighbor')}</span><span class="time">${new Date(c.created_at).toLocaleDateString()}</span><div>${escapeHtml(c.body)}</div></div>
+  `).join('');
+}
+
+async function postComment(e, listingId) {
+  e.preventDefault();
+  const input = document.getElementById(`commentInput-${listingId}`);
+  const body = input.value.trim();
+  if (!body) return;
+  const { error } = await supa.from('comments').insert({
+    listing_id: listingId,
+    user_id: currentUser.id,
+    author_name: currentUser.email,
+    body,
+  });
+  if (error) { alert(error.message); return; }
+  input.value = '';
+  loadComments(listingId);
+}
+
+// ---------- Directory ----------
+document.getElementById('showDirFormBtn').addEventListener('click', async () => {
+  const form = document.getElementById('editDirectoryForm');
+  form.classList.toggle('hidden');
+  if (!form.classList.contains('hidden')) {
+    const { data } = await supa.from('directory').select('notify_new_listings').eq('id', currentUser.id).maybeSingle();
+    const noEntry = document.getElementById('dirNoEntryMsg');
+    if (data) {
+      document.getElementById('dNotify').checked = !!data.notify_new_listings;
+      noEntry.textContent = '';
+    } else {
+      noEntry.textContent = "You're not in the directory yet — contact the Coalition to be added before setting a preference.";
+    }
+  }
+});
+
+document.getElementById('editDirectoryForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('dirMsg');
+  msg.textContent = "Saving…";
+  const { error } = await supa.rpc('set_notify_preference', { pref: document.getElementById('dNotify').checked });
+  if (error) { msg.textContent = error.message; return; }
+  msg.textContent = "Saved!";
+});
+
+async function loadDirectory() {
+  const container = document.getElementById('directoryContainer');
+  container.innerHTML = "Loading…";
+  const { data, error } = await supa.from('directory').select('*').order('full_name');
+  if (error) { container.innerHTML = `<div class="empty-state">${error.message}</div>`; return; }
+  if (!data.length) { container.innerHTML = `<div class="empty-state">No entries yet. Click "Edit my entry" to add yours.</div>`; return; }
+  container.innerHTML = `<div class="directory-grid">${data.map(m => `
+    <div class="member-card">
+      <h3>${escapeHtml(m.full_name)}</h3>
+      <div class="meta">${escapeHtml(m.address || '')}</div>
+      <div class="meta">${escapeHtml(m.phone || '')} ${m.email ? '· ' + escapeHtml(m.email) : ''}</div>
+      ${m.household_notes ? `<div class="meta">${escapeHtml(m.household_notes)}</div>` : ''}
+    </div>
+  `).join('')}</div>`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+checkSession();
+</script>
+
+</body>
+</html>
