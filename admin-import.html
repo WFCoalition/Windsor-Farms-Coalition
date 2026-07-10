@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Bulk Import</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#1B2A41; --swan:#14171C; --cream:#F6F1E7; --gold:#B08D57; --sage:#6B7A6F; --line:#DCD3C0; --danger:#8B3A3A; --ok:#3A6B4C;}
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--cream); color:var(--swan); font-family:'EB Garamond', Georgia, serif; font-size:17px;}
+  h1,h2{font-family:'Playfair Display', Georgia, serif;}
+  header{background:var(--navy); color:var(--cream); padding:20px 24px;}
+  header h1{margin:0; font-size:1.4rem;}
+  main{max-width:800px; margin:0 auto; padding:30px 24px 80px;}
+  label{display:block; font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; color:var(--sage); margin:18px 0 6px;}
+  input, textarea{width:100%; padding:10px 12px; border:1px solid var(--line); background:#fff; font-family:'EB Garamond', monospace, serif; font-size:.95rem; border-radius:2px;}
+  textarea{min-height:180px; font-family:monospace; font-size:.85rem;}
+  button{margin-top:16px; background:var(--navy); color:var(--cream); border:none; padding:11px 20px; font-family:'EB Garamond', serif; font-size:1rem; cursor:pointer;}
+  button:hover{background:var(--swan);}
+  button.secondary{background:none; border:1px solid var(--line); color:var(--swan); margin-left:10px;}
+  .hint{color:var(--sage); font-size:.88rem; margin-top:4px;}
+  table{width:100%; border-collapse:collapse; margin-top:20px; font-size:.9rem;}
+  th, td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line);}
+  th{color:var(--sage); text-transform:uppercase; font-size:.75rem; letter-spacing:.05em;}
+  .status-created{color:var(--ok); font-weight:600;}
+  .status-error, .status-skipped, .status-partial{color:var(--danger); font-weight:600;}
+  #msg{margin-top:14px; font-size:.9rem;}
+  .warn{background:#fff; border:1px solid var(--gold); padding:14px 16px; margin-bottom:10px; font-size:.9rem;}
+</style>
+</head>
+<body>
+
+<header><h1>Admin — Bulk Import Members</h1></header>
+
+<main>
+  <div class="warn">This page isn't linked anywhere on the site — bookmark it if you'll use it again. Each import creates a real login account per row, with a random temporary password.</div>
+
+  <label for="secret">Admin secret</label>
+  <input id="secret" type="password" placeholder="Paste the ADMIN_IMPORT_SECRET from your notes">
+
+  <label for="csv">Member data — one household per line</label>
+  <textarea id="csv" placeholder="Full Name, Address, Phone, Email, Notes (optional)
+Jane Smith, 123 Sulgrave Rd, 804-555-0100, jane@example.com, dog: Biscuit
+John Doe, 456 Dover Rd, 804-555-0101, john@example.com"></textarea>
+  <div class="hint">Format: Name, Address, Phone, Email, Notes — comma-separated, one household per line. Address/Phone/Notes can be left blank, Name and Email are required.</div>
+
+  <button id="previewBtn">Preview</button>
+  <div id="previewArea"></div>
+
+  <button id="runBtn" style="display:none;">Run Import</button>
+  <div id="msg"></div>
+  <div id="resultsArea"></div>
+  <button class="secondary" id="downloadBtn" style="display:none;">Download results as CSV</button>
+</main>
+
+<script>
+const FUNCTION_URL = "https://maazeduxjesenoyrffcp.supabase.co/functions/v1/admin-bulk-import";
+
+function parseCsv(text) {
+  return text.split("\n").map(l => l.trim()).filter(Boolean).map(line => {
+    const [full_name, address, phone, email, ...rest] = line.split(",").map(s => s.trim());
+    return { full_name, address, phone, email, household_notes: rest.join(",").trim() || undefined };
+  });
+}
+
+let parsedRows = [];
+let lastResults = [];
+
+document.getElementById('previewBtn').addEventListener('click', () => {
+  parsedRows = parseCsv(document.getElementById('csv').value);
+  const area = document.getElementById('previewArea');
+  if (!parsedRows.length) { area.innerHTML = '<p class="hint">Nothing to preview yet.</p>'; return; }
+  area.innerHTML = `<table><tr><th>Name</th><th>Email</th><th>Address</th><th>Phone</th></tr>${
+    parsedRows.map(r => `<tr><td>${r.full_name||''}</td><td>${r.email||''}</td><td>${r.address||''}</td><td>${r.phone||''}</td></tr>`).join('')
+  }</table><p class="hint">${parsedRows.length} household(s) found. Check this looks right, then click Run Import.</p>`;
+  document.getElementById('runBtn').style.display = 'inline-block';
+});
+
+document.getElementById('runBtn').addEventListener('click', async () => {
+  const secret = document.getElementById('secret').value.trim();
+  const msg = document.getElementById('msg');
+  if (!secret) { msg.textContent = "Enter the admin secret first."; return; }
+  if (!parsedRows.length) { msg.textContent = "Click Preview first."; return; }
+
+  msg.textContent = `Importing ${parsedRows.length} household(s)… this may take a moment.`;
+  document.getElementById('runBtn').disabled = true;
+
+  try {
+    const res = await fetch(FUNCTION_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret, rows: parsedRows }),
+    });
+    const data = await res.json();
+    if (!res.ok) { msg.textContent = data.error || "Import failed."; document.getElementById('runBtn').disabled = false; return; }
+
+    lastResults = data.results;
+    msg.textContent = `Done. ${lastResults.filter(r=>r.status==='created').length} created, ${lastResults.filter(r=>r.status!=='created').length} skipped/errored.`;
+    renderResults(lastResults);
+    document.getElementById('downloadBtn').style.display = 'inline-block';
+  } catch (err) {
+    msg.textContent = "Error: " + err.message;
+  }
+  document.getElementById('runBtn').disabled = false;
+});
+
+function renderResults(results) {
+  const area = document.getElementById('resultsArea');
+  area.innerHTML = `<table><tr><th>Name</th><th>Email</th><th>Status</th><th>Temp Password / Error</th></tr>${
+    results.map(r => `<tr><td>${r.full_name||''}</td><td>${r.email||''}</td><td class="status-${r.status}">${r.status}</td><td>${r.temp_password || r.error || ''}</td></tr>`).join('')
+  }</table>`;
+}
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const rows = [["full_name","email","status","temp_password_or_error"]].concat(
+    lastResults.map(r => [r.full_name||'', r.email||'', r.status, r.temp_password || r.error || ''])
+  );
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "import-results.csv";
+  a.click();
+});
+</script>
+
+</body>
+</html>
