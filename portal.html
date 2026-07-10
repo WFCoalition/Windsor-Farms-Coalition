@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windsor Farms — Member Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --navy:#1B2A41;
+    --swan:#14171C;
+    --cream:#F6F1E7;
+    --gold:#B08D57;
+    --sage:#6B7A6F;
+    --line:#DCD3C0;
+    --danger:#8B3A3A;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--swan);
+    font-family:'EB Garamond', Georgia, serif;
+    font-size:18px;
+    line-height:1.5;
+  }
+  h1,h2,h3{font-family:'Playfair Display', Georgia, serif; margin:0 0 .3em;}
+  .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    font-size:.7rem;
+    color:var(--gold);
+    font-family:'EB Garamond', serif;
+    font-weight:500;
+  }
+  a{color:var(--navy);}
+
+  header{
+    background:var(--navy);
+    color:var(--cream);
+    padding:22px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  header .brand{display:flex; align-items:center; gap:12px;}
+  header .brand svg{width:30px; height:30px; flex-shrink:0;}
+  header h1{font-size:1.4rem; color:var(--cream); margin:0;}
+  header .brand small{display:block; color:var(--gold); letter-spacing:.1em; font-size:.65rem; text-transform:uppercase;}
+  #signOutBtn{
+    background:none; border:1px solid rgba(246,241,231,.4); color:var(--cream);
+    padding:7px 14px; border-radius:2px; font-family:'EB Garamond',serif; font-size:.9rem; cursor:pointer;
+  }
+  #signOutBtn:hover{border-color:var(--gold); color:var(--gold);}
+
+  nav.tabs{
+    display:flex; gap:0; border-bottom:1px solid var(--line); background:var(--cream);
+    padding:0 24px;
+  }
+  nav.tabs button{
+    background:none; border:none; padding:16px 18px; font-family:'EB Garamond', serif;
+    font-size:1rem; cursor:pointer; color:var(--sage); border-bottom:2px solid transparent;
+  }
+  nav.tabs button.active{color:var(--navy); border-bottom-color:var(--gold); font-weight:500;}
+
+  main{max-width:900px; margin:0 auto; padding:36px 24px 80px;}
+  .hidden{display:none !important;}
+
+  /* ---- Login ---- */
+  #loginScreen{
+    min-height:80vh; display:flex; align-items:center; justify-content:center; flex-direction:column;
+    text-align:center; padding:24px;
+  }
+  #loginScreen svg{width:56px; height:56px; margin-bottom:8px;}
+  #loginScreen h1{font-size:2rem; margin-bottom:4px;}
+  #loginScreen p.sub{color:var(--sage); margin-bottom:28px; font-style:italic;}
+  .card{
+    background:#fff; border:1px solid var(--line); padding:28px; max-width:380px; width:100%;
+    text-align:left;
+  }
+  label{display:block; font-size:.8rem; letter-spacing:.05em; text-transform:uppercase; color:var(--sage); margin:14px 0 4px;}
+  input, textarea, select{
+    width:100%; padding:10px 12px; border:1px solid var(--line); background:var(--cream);
+    font-family:'EB Garamond', serif; font-size:1rem; color:var(--swan); border-radius:2px;
+  }
+  input:focus, textarea:focus, select:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  button.primary{
+    margin-top:20px; width:100%; background:var(--navy); color:var(--cream); border:none;
+    padding:12px; font-family:'EB Garamond', serif; font-size:1rem; letter-spacing:.03em; cursor:pointer;
+  }
+  button.primary:hover{background:var(--swan);}
+  #loginMsg{margin-top:14px; font-size:.9rem; color:var(--danger); min-height:1.2em;}
+
+  /* ---- Directory ---- */
+  .directory-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:640px){.directory-grid{grid-template-columns:1fr;}}
+  .member-card{border:1px solid var(--line); background:#fff; padding:16px 18px;}
+  .member-card h3{font-size:1.1rem;}
+  .member-card .meta{color:var(--sage); font-size:.92rem;}
+
+  /* ---- Marketplace ---- */
+  .listing{border:1px solid var(--line); background:#fff; padding:18px; margin-bottom:14px; display:flex; gap:16px;}
+  .listing img{width:110px; height:110px; object-fit:cover; border:1px solid var(--line); flex-shrink:0;}
+  .listing .body{flex:1;}
+  .listing h3{font-size:1.15rem; display:flex; justify-content:space-between; gap:10px;}
+  .listing .price{color:var(--gold); font-weight:600; white-space:nowrap;}
+  .listing .meta{color:var(--sage); font-size:.9rem; margin-top:2px;}
+  .listing .actions{margin-top:8px;}
+  .listing .actions button{background:none; border:1px solid var(--line); padding:4px 10px; font-size:.85rem; cursor:pointer; font-family:'EB Garamond',serif;}
+  .sold-badge{background:var(--sage); color:#fff; font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:2px;}
+
+  .section-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:18px; flex-wrap:wrap; gap:10px;}
+  .toggle-form-btn{
+    background:var(--gold); color:#fff; border:none; padding:9px 16px; font-family:'EB Garamond', serif;
+    font-size:.95rem; cursor:pointer;
+  }
+  #newListingForm, #editDirectoryForm{
+    border:1px solid var(--line); background:#fff; padding:20px; margin-bottom:24px;
+  }
+  #newListingForm .row, #editDirectoryForm .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  @media (max-width:640px){#newListingForm .row, #editDirectoryForm .row{grid-template-columns:1fr;}}
+  .empty-state{color:var(--sage); font-style:italic; padding:30px 0; text-align:center;}
+  .status-msg{font-size:.85rem; margin-top:10px;}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginScreen">
+  <svg viewBox="0 0 100 100" fill="none"><path d="M20 70c10-25 30-45 55-42-8 2-14 9-14 17 0 3 1 5 3 7 8-2 14 2 14 8 0 8-11 14-24 14-22 0-38-15-40-32-1-9 3-13 6-13 3 0 5 4 5 9 0 6-3 12-5 17z" stroke="#1B2A41" stroke-width="2.5"/><circle cx="63" cy="42" r="2" fill="#1B2A41"/></svg>
+  <div class="eyebrow">Windsor Farms Coalition</div>
+  <h1>Member Portal</h1>
+  <p class="sub">Directory &amp; Marketplace — residents only</p>
+  <div class="card">
+    <label for="loginEmail">Email</label>
+    <input id="loginEmail" type="email" autocomplete="username" placeholder="you@example.com">
+    <label for="loginPassword">Password</label>
+    <input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••">
+    <button class="primary" id="loginBtn">Sign in</button>
+    <div id="loginMsg"></div>
+  </div>
+  <p class="sub" style="margin-top:20px; font-size:.85rem;">Don't have an account? Ask the Coalition to add you: <a href="mailto:wfcoalition@gmail.com">wfcoalition@gmail.com</a></p>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app" class="hidden">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 100 100" fill="none"><path d="M20 70c10-25 30-45 55-42-8 2-14 9-14 17 0 3 1 5 3 7 8-2 14 2 14 8 0 8-11 14-24 14-22 0-38-15-40-32-1-9 3-13 6-13 3 0 5 4 5 9 0 6-3 12-5 17z" stroke="#F6F1E7" stroke-width="2.5"/><circle cx="63" cy="42" r="2" fill="#F6F1E7"/></svg>
+      <div>
+        <small>Windsor Farms Coalition</small>
+        <h1>Member Portal</h1>
+      </div>
+    </div>
+    <button id="signOutBtn">Sign out</button>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="marketplace" class="active">Marketplace</button>
+    <button data-tab="directory">Directory</button>
+  </nav>
+
+  <main>
+    <!-- MARKETPLACE -->
+    <section id="tab-marketplace">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">For neighbors, by neighbors</div>
+          <h2>Marketplace</h2>
+        </div>
+        <button class="toggle-form-btn" id="showListingFormBtn">+ Post an item</button>
+      </div>
+
+      <form id="newListingForm" class="hidden">
+        <div class="row">
+          <div><label>Title</label><input id="lTitle" required></div>
+          <div><label>Price</label><input id="lPrice" placeholder="$25, Free, OBO…"></div>
+        </div>
+        <label>Description</label>
+        <textarea id="lDesc" rows="3"></textarea>
+        <div class="row">
+          <div><label>Category</label><input id="lCategory" placeholder="Furniture, kids' gear, tools…"></div>
+          <div><label>Photo URL (optional)</label><input id="lPhoto" placeholder="https://…"></div>
+        </div>
+        <label>How should buyers reach you?</label>
+        <input id="lContact" placeholder="Phone, email, or 'reply via portal'">
+        <button type="submit" class="primary">Post listing</button>
+        <div class="status-msg" id="listingMsg"></div>
+      </form>
+
+      <div id="listingsContainer"></div>
+    </section>
+
+    <!-- DIRECTORY -->
+    <section id="tab-directory" class="hidden">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">200+ households and counting</div>
+          <h2>Neighbor Directory</h2>
+        </div>
+        <button class="toggle-form-btn" id="showDirFormBtn">Edit my entry</button>
+      </div>
+
+      <form id="editDirectoryForm" class="hidden">
+        <div class="row">
+          <div><label>Full name</label><input id="dName" required></div>
+          <div><label>Address</label><input id="dAddress"></div>
+        </div>
+        <div class="row">
+          <div><label>Phone</label><input id="dPhone"></div>
+          <div><label>Email</label><input id="dEmail"></div>
+        </div>
+        <label>Household notes (kids, pets — optional)</label>
+        <input id="dNotes" placeholder="e.g. kids: Ellie (7); dog: Biscuit">
+        <button type="submit" class="primary">Save my entry</button>
+        <div class="status-msg" id="dirMsg"></div>
+      </form>
+
+      <div id="directoryContainer"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+// ====== CONFIGURE THESE TWO VALUES ======
+const SUPABASE_URL = "https://maazeduxjesenoyrffcp.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_W7RX0KWHyvAmGVo0lBGx8Q_t4OxUEUO";
+// =========================================
+
+const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentUser = null;
+
+// ---------- Auth ----------
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const msg = document.getElementById('loginMsg');
+  msg.textContent = "Signing in…";
+  const { data, error } = await supa.auth.signInWithPassword({ email, password });
+  if (error) { msg.textContent = error.message; return; }
+  msg.textContent = "";
+  onSignedIn(data.user);
+});
+
+document.getElementById('signOutBtn').addEventListener('click', async () => {
+  await supa.auth.signOut();
+  location.reload();
+});
+
+async function checkSession() {
+  const { data } = await supa.auth.getSession();
+  if (data.session) onSignedIn(data.session.user);
+}
+
+function onSignedIn(user) {
+  currentUser = user;
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  loadListings();
+  loadDirectory();
+}
+
+// ---------- Tabs ----------
+document.querySelectorAll('nav.tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-marketplace').classList.toggle('hidden', btn.dataset.tab !== 'marketplace');
+    document.getElementById('tab-directory').classList.toggle('hidden', btn.dataset.tab !== 'directory');
+  });
+});
+
+// ---------- Marketplace ----------
+document.getElementById('showListingFormBtn').addEventListener('click', () => {
+  document.getElementById('newListingForm').classList.toggle('hidden');
+});
+
+document.getElementById('newListingForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('listingMsg');
+  msg.textContent = "Posting…";
+  const { error } = await supa.from('listings').insert({
+    seller_id: currentUser.id,
+    title: document.getElementById('lTitle').value.trim(),
+    price: document.getElementById('lPrice').value.trim(),
+    description: document.getElementById('lDesc').value.trim(),
+    category: document.getElementById('lCategory').value.trim(),
+    photo_url: document.getElementById('lPhoto').value.trim() || null,
+    contact: document.getElementById('lContact').value.trim(),
+  });
+  if (error) { msg.textContent = error.message; return; }
+  msg.textContent = "Posted!";
+  e.target.reset();
+  e.target.classList.add('hidden');
+  loadListings();
+});
+
+async function loadListings() {
+  const container = document.getElementById('listingsContainer');
+  container.innerHTML = "Loading…";
+  const { data, error } = await supa.from('listings').select('*').order('created_at', { ascending: false });
+  if (error) { container.innerHTML = `<div class="empty-state">${error.message}</div>`; return; }
+  if (!data.length) { container.innerHTML = `<div class="empty-state">No listings yet. Be the first to post something!</div>`; return; }
+  container.innerHTML = data.map(l => `
+    <div class="listing">
+      ${l.photo_url ? `<img src="${escapeHtml(l.photo_url)}" alt="">` : ''}
+      <div class="body">
+        <h3>${escapeHtml(l.title)} <span class="price">${escapeHtml(l.price || '')}</span></h3>
+        <div class="meta">${escapeHtml(l.category || '')}${l.status === 'sold' ? ' · <span class="sold-badge">Sold</span>' : ''}</div>
+        <p>${escapeHtml(l.description || '')}</p>
+        <div class="meta">Contact: ${escapeHtml(l.contact || 'See directory')}</div>
+        ${l.seller_id === currentUser.id ? `
+          <div class="actions">
+            ${l.status !== 'sold' ? `<button onclick="markSold('${l.id}')">Mark sold</button>` : ''}
+            <button onclick="deleteListing('${l.id}')">Delete</button>
+          </div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function markSold(id) {
+  await supa.from('listings').update({ status: 'sold' }).eq('id', id);
+  loadListings();
+}
+async function deleteListing(id) {
+  if (!confirm('Delete this listing?')) return;
+  await supa.from('listings').delete().eq('id', id);
+  loadListings();
+}
+
+// ---------- Directory ----------
+document.getElementById('showDirFormBtn').addEventListener('click', async () => {
+  const form = document.getElementById('editDirectoryForm');
+  form.classList.toggle('hidden');
+  if (!form.classList.contains('hidden')) {
+    const { data } = await supa.from('directory').select('*').eq('id', currentUser.id).maybeSingle();
+    if (data) {
+      document.getElementById('dName').value = data.full_name || '';
+      document.getElementById('dAddress').value = data.address || '';
+      document.getElementById('dPhone').value = data.phone || '';
+      document.getElementById('dEmail').value = data.email || currentUser.email;
+      document.getElementById('dNotes').value = data.household_notes || '';
+    } else {
+      document.getElementById('dEmail').value = currentUser.email;
+    }
+  }
+});
+
+document.getElementById('editDirectoryForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('dirMsg');
+  msg.textContent = "Saving…";
+  const { error } = await supa.from('directory').upsert({
+    id: currentUser.id,
+    full_name: document.getElementById('dName').value.trim(),
+    address: document.getElementById('dAddress').value.trim(),
+    phone: document.getElementById('dPhone').value.trim(),
+    email: document.getElementById('dEmail').value.trim(),
+    household_notes: document.getElementById('dNotes').value.trim(),
+    updated_at: new Date().toISOString(),
+  });
+  if (error) { msg.textContent = error.message; return; }
+  msg.textContent = "Saved!";
+  loadDirectory();
+});
+
+async function loadDirectory() {
+  const container = document.getElementById('directoryContainer');
+  container.innerHTML = "Loading…";
+  const { data, error } = await supa.from('directory').select('*').order('full_name');
+  if (error) { container.innerHTML = `<div class="empty-state">${error.message}</div>`; return; }
+  if (!data.length) { container.innerHTML = `<div class="empty-state">No entries yet. Click "Edit my entry" to add yours.</div>`; return; }
+  container.innerHTML = `<div class="directory-grid">${data.map(m => `
+    <div class="member-card">
+      <h3>${escapeHtml(m.full_name)}</h3>
+      <div class="meta">${escapeHtml(m.address || '')}</div>
+      <div class="meta">${escapeHtml(m.phone || '')} ${m.email ? '· ' + escapeHtml(m.email) : ''}</div>
+      ${m.household_notes ? `<div class="meta">${escapeHtml(m.household_notes)}</div>` : ''}
+    </div>
+  `).join('')}</div>`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+checkSession();
+</script>
+</body>
+</html>
